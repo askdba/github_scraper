@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Environments
+.env
+.venv/
+env/
+venv/
+ENV/
+
+# Project specific
+*.json
+y
+pulse_report.json
+pulse_web_report.json
+weekly_digest.txt

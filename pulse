@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Helper script to run GitHub Pulse Scraper with the correct Python version (3.9)
+# Usage: ./pulse [arguments]
+# Example: ./pulse --owner Altinity --repo altinityknowledgebase --days 180
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# Check if python3.9 exists
+if command -v python3.9 &> /dev/null; then
+    PYTHON_CMD="python3.9"
+else
+    # Fallback to python3 if python3.9 is not found
+    PYTHON_CMD="python3"
+fi
+
+$PYTHON_CMD "$SCRIPT_DIR/github_pulse_scraper.py" "$@"
