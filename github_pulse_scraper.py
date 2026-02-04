@@ -11,7 +11,7 @@ import argparse
 from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 from dotenv import load_dotenv
-from utils import logger, export_to_json, format_timestamp
+from utils import logger, export_to_json, format_timestamp, print_scorecard_report
 
 # Load environment variables from .env file
 load_dotenv()
@@ -148,99 +148,42 @@ class GitHubPulseScraper:
         """Generate a comprehensive pulse report"""
         since_date = datetime.now(timezone.utc) - timedelta(days=period_days)
         
-        print(f"\nFetching pulse data for {self.owner}/{self.repo}")
-        print(f"Period: Last {period_days} days (since {since_date.strftime('%Y-%m-%d')})")
-        print("=" * 80)
-        
-        # Get repository info
         try:
+            # --- DATA FETCHING ---
             repo_info = self.get_repo_info()
-            print(f"\nRepository: {repo_info['full_name']}")
-            print(f"Description: {repo_info.get('description', 'N/A')}")
-            print(f"Stars: {repo_info['stargazers_count']}")
-            print(f"Forks: {repo_info['forks_count']}")
-            print(f"Open Issues: {repo_info['open_issues_count']}")
-        except Exception as e:
-            logger.error(f"Error fetching repo info: {e}")
-            return
-        
-        # Get commits
-        print("\n" + "=" * 80)
-        print("COMMITS")
-        print("=" * 80)
-        try:
             commits = self.get_commits(since_date)
-            print(f"Total commits: {len(commits)}")
-            
-            contributors = self.analyze_contributors(commits)
-            print(f"\nActive contributors: {len(contributors)}")
-            print("\nTop contributors:")
-            for i, (author, count) in enumerate(list(contributors.items())[:10], 1):
-                print(f"  {i}. {author}: {count} commits")
-            
-            # Show recent commits
-            print("\nRecent commits:")
-            for commit in commits[:10]:
-                sha = commit["sha"][:7]
-                author = commit["commit"]["author"]["name"]
-                message = commit["commit"]["message"].split("\n")[0][:60]
-                date = format_timestamp(commit["commit"]["author"]["date"])
-                print(f"  {sha} - {author}: {message} ({date})")
-                
-        except Exception as e:
-            logger.error(f"Error fetching commits: {e}")
-        
-        # Get issues
-        print("\n" + "=" * 80)
-        print("ISSUES")
-        print("=" * 80)
-        try:
             issues = self.get_issues(since_date)
-            
-            # Count by state
-            opened_issues = [i for i in issues if datetime.fromisoformat(i["created_at"].replace("Z", "+00:00")) >= since_date]
-            closed_issues = [i for i in issues if i["state"] == "closed" and i.get("closed_at") and datetime.fromisoformat(i["closed_at"].replace("Z", "+00:00")) >= since_date]
-            
-            print(f"Issues opened: {len(opened_issues)}")
-            print(f"Issues closed: {len(closed_issues)}")
-            
-            if opened_issues:
-                print("\nRecently opened issues:")
-                for issue in opened_issues[:5]:
-                    date = format_timestamp(issue['created_at'])
-                    print(f"  #{issue['number']}: {issue['title']}")
-                    print(f"    by {issue['user']['login']} - {date}")
-                    
-        except Exception as e:
-            logger.error(f"Error fetching issues: {e}")
-        
-        # Get pull requests
-        print("\n" + "=" * 80)
-        print("PULL REQUESTS")
-        print("=" * 80)
-        try:
             prs = self.get_pull_requests(since_date)
             
-            # Count by state and activity
-            opened_prs = [pr for pr in prs if datetime.fromisoformat(pr["created_at"].replace("Z", "+00:00")) >= since_date]
-            closed_prs = [pr for pr in prs if pr["state"] == "closed" and pr.get("closed_at") and datetime.fromisoformat(pr["closed_at"].replace("Z", "+00:00")) >= since_date]
-            merged_prs = [pr for pr in closed_prs if pr.get("merged_at")]
+            # --- DATA PROCESSING ---
+            contributors = self.analyze_contributors(commits)
             
-            print(f"Pull requests opened: {len(opened_prs)}")
-            print(f"Pull requests merged: {len(merged_prs)}")
-            print(f"Pull requests closed (not merged): {len(closed_prs) - len(merged_prs)}")
+            issues_opened = [i for i in issues if datetime.fromisoformat(i["created_at"].replace("Z", "+00:00")) >= since_date]
+            issues_closed = [i for i in issues if i["state"] == "closed" and i.get("closed_at") and datetime.fromisoformat(i["closed_at"].replace("Z", "+00:00")) >= since_date]
             
-            if opened_prs:
-                print("\nRecently opened pull requests:")
-                for pr in opened_prs[:5]:
-                    status = "✓ merged" if pr.get("merged_at") else ("✗ closed" if pr["state"] == "closed" else "◯ open")
-                    date = format_timestamp(pr['created_at'])
-                    print(f"  #{pr['number']}: {pr['title']}")
-                    print(f"    by {pr['user']['login']} - {status} - {date}")
-                    
+            prs_opened = [p for p in prs if datetime.fromisoformat(p["created_at"].replace("Z", "+00:00")) >= since_date]
+            closed_prs = [p for p in prs if p["state"] == "closed" and p.get("closed_at") and datetime.fromisoformat(p["closed_at"].replace("Z", "+00:00")) >= since_date]
+            prs_merged = [p for p in closed_prs if p.get("merged_at")]
+            prs_closed_unmerged = [p for p in closed_prs if not p.get("merged_at")]
+
+            # --- REPORTING ---
+            print_scorecard_report(
+                repo_info,
+                commits,
+                contributors,
+                issues_opened,
+                issues_closed,
+                prs_opened,
+                prs_merged,
+                prs_closed_unmerged,
+                period_days
+            )
+            
         except Exception as e:
-            logger.error(f"Error fetching pull requests: {e}")
-        
+            logger.error(f"An error occurred during report generation: {e}")
+            # Optionally re-raise or handle specific exceptions
+            return
+
         print("\n" + "=" * 80)
         print("Report complete!")
         
