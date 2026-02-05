@@ -80,8 +80,12 @@ def print_scorecard_report(
         
         max_commits = max(contributors.values())
         for i, (author, count) in enumerate(list(contributors.items())[:5], 1):
+            # Ensure contributor name fits within 24-character column
+            author_display = author
+            if len(author_display) > 24:
+                author_display = author_display[:22] + ".."
             bar = get_bar_chart(count, max_commits)
-            print(f"│ {i}. {author:<24} │ {count:<10} {bar} │")
+            print(f"│ {i}. {author_display:<24} │ {count:<10} {bar} │")
     print("└" + "─" * 78 + "┘")
     
     # --- Issues ---
