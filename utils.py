@@ -105,7 +105,7 @@ def print_scorecard_report(
         print(f"│ {'Recent PRs':<14} │ {'Title':<40} {'Author':<10} {'Status':>9} │")
         print("│" + "─" * 15 + "┼" + "─" * 62 + "│")
         for pr in prs_opened[:3]:
-            title = pr['title'][:38] + ".." if len(pr['title']) > 40 else pr['title']
+            title = pr['title'][:38] + ".." if len(pr['title']) > 38 else pr['title']
             author = pr['user']['login'][:10]
             status = "Merged" if pr.get("merged_at") else ("Closed" if pr["state"] == "closed" else "Open")
             print(f"│ #{pr['number']:<14} │ {title:<40} {author:<10} {status:>9} │")
