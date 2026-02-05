@@ -55,7 +55,9 @@ def print_scorecard_report(
     # --- Header ---
     print("\n" + "╔" + "═" * 78 + "╗")
     print(f"║ {'GitHub Pulse Scorecard:':<48} {repo_info['full_name']:>28} ║")
-    print(f"║ {'Period:':<8} Last {period_days} days {'':<56} ║")
+    dynamic_content = f"{'Period:':<8} Last {period_days} days"
+    padding = max(0, 76 - len(dynamic_content))
+    print(f"║ {dynamic_content}{' ' * padding} ║")
     print("╚" + "═" * 78 + "╝")
 
     # --- Key Metrics ---
