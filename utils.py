@@ -78,7 +78,7 @@ def print_scorecard_report(
         print(f"│ {'Top Contributors':<27} │ {'Commits':<10} {'Activity':<22} │")
         print("│" + "─" * 28 + "┼" + "─" * 49 + "│")
         
-        max_commits = max(contributors.values()) if contributors else 0
+        max_commits = max(contributors.values())
         for i, (author, count) in enumerate(list(contributors.items())[:5], 1):
             bar = get_bar_chart(count, max_commits)
             print(f"│ {i}. {author:<24} │ {count:<10} {bar} │")
