@@ -69,7 +69,7 @@ def print_scorecard_report(
 
     # --- Commits & Contributors ---
     print("\n" + "┌─ COMMITS & CONTRIBUTORS " + "─" * 55 + "┐")
-    print(f"│ Total Commits: {total_commits:<4} │ Active Contributors: {len(contributors):<4} │")
+    print(f"│ Total Commits: {total_commits:<5} │ Active Contributors: {len(contributors):<4} │")
     
     if contributors:
         print("│" + "─" * 28 + "┬" + "─" * 49 + "│")
