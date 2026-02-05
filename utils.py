@@ -43,78 +43,126 @@ def print_scorecard_report(
     prs_closed_unmerged,
     period_days
 ):
-    """Prints a formatted, scorecard-style report to the console."""
+    """Prints a perfectly aligned, scorecard-style report using basic ASCII."""
     
-    # --- Helper for dynamic bar charts ---
-    def get_bar_chart(value, max_value, bar_length=20):
-        if max_value == 0:
-            return " " * bar_length
-        bar = "█" * int((value / max_value) * bar_length)
-        return f"{bar:<{bar_length}}"
+    WIDTH = 78
+
+    def truncate(text, max_len):
+        """Truncates text with an ellipsis if it's too long."""
+        if not text:
+            return ""
+        if len(text) > max_len:
+            return text[:max_len - 2] + ".."
+        return text
+
+    def print_row(items, widths, dividers=True):
+        """Prints a row with specified content and widths."""
+        row_str = "|" if dividers else " "
+        for i, item in enumerate(items):
+            # Pad content to the full width of the column
+            padded_item = f" {item} ".ljust(widths[i] + 2)
+            row_str += padded_item
+            if dividers and i < len(items) - 1:
+                row_str += "|"
+        row_str += "|" if dividers else " "
+        print(row_str)
+
+    def print_divider(widths, is_header=False):
+        """Prints a +---+---+ style divider."""
+        divider = "+"
+        for i, width in enumerate(widths):
+            char = "=" if is_header else "-"
+            divider += char * (width + 2)
+            divider += "+"
+        print(divider)
 
     # --- Header ---
-    print("\n" + "╔" + "═" * 78 + "╗")
-    print(f"║ {'GitHub Pulse Scorecard:':<48} {repo_info['full_name']:>28} ║")
-    dynamic_content = f"{'Period:':<8} Last {period_days} days"
-    padding = max(0, 76 - len(dynamic_content))
-    print(f"║ {dynamic_content}{' ' * padding} ║")
-    print("╚" + "═" * 78 + "╝")
+    repo_name_full = repo_info.get('full_name', 'N/A')
+    repo_name = truncate(repo_name_full, 35)
+    header_title = f"GitHub Pulse Scorecard: {repo_name}"
+    period_text = f"Period: Last {period_days} days"
+
+    print("\n" + "=" * (WIDTH + 2))
+    print(f" {header_title.ljust(WIDTH)}")
+    print(f" {period_text.ljust(WIDTH)}")
+    print("=" * (WIDTH + 2))
 
     # --- Key Metrics ---
     total_commits = len(commits)
     total_issues = len(issues_opened) + len(issues_closed)
     total_prs = len(prs_opened) + len(prs_merged) + len(prs_closed_unmerged)
     
-    print("\n" + "┌─ SUMMARY OVERVIEW " + "─" * 61 + "┐")
-    print(f"│ Total Commits: {total_commits:<5} | Total Issues: {total_issues:<5} | Total PRs: {total_prs:<5} │")
-    print("└" + "─" * 78 + "┘")
+    c_text = f"Total Commits: {total_commits}"
+    i_text = f"Total Issues: {total_issues}"
+    p_text = f"Total PRs: {total_prs}"
+    
+    print("\nSUMMARY OVERVIEW")
+    print_divider([25, 25, 26])
+    print_row([c_text, i_text, p_text], [25, 25, 26])
+    print_divider([25, 25, 26])
 
     # --- Commits & Contributors ---
-    print("\n" + "┌─ COMMITS & CONTRIBUTORS " + "─" * 55 + "┐")
-    print(f"│ Total Commits: {total_commits:<5} │ Active Contributors: {len(contributors):<4} │")
+    print("\nCOMMITS & CONTRIBUTORS")
+    c_widths = [4, 33, 10, 25]
+    print_divider(c_widths)
+    summary_items = [
+        "", 
+        f"Total Commits: {total_commits}", 
+        "", 
+        f"Active Contributors: {len(contributors)}"
+    ]
+    print_row(summary_items, c_widths)
     
     if contributors:
-        print("│" + "─" * 28 + "┬" + "─" * 49 + "│")
-        print(f"│ {'Top Contributors':<27} │ {'Commits':<10} {'Activity':<22} │")
-        print("│" + "─" * 28 + "┼" + "─" * 49 + "│")
+        print_divider(c_widths, is_header=True)
+        print_row(["#", "Top Contributor", "Commits", "Activity"], c_widths)
+        print_divider(c_widths, is_header=True)
         
-        max_commits = max(contributors.values())
+        max_commits = max(contributors.values()) if contributors else 0
         for i, (author, count) in enumerate(list(contributors.items())[:5], 1):
-            # Ensure contributor name fits within 24-character column
-            author_display = author
-            if len(author_display) > 24:
-                author_display = author_display[:22] + ".."
-            bar = get_bar_chart(count, max_commits)
-            print(f"│ {i}. {author_display:<24} │ {count:<10} {bar} │")
-    print("└" + "─" * 78 + "┘")
-    
+            author_display = truncate(author, c_widths[1] - 1)
+            bar_len = c_widths[3] - 1
+            bar = "█" * int((count / max_commits) * bar_len) if max_commits > 0 else ""
+            print_row([str(i), author_display, str(count), bar], c_widths)
+    print_divider(c_widths)
+
     # --- Issues ---
-    print("\n" + "┌─ ISSUES " + "─" * 70 + "┐")
-    print(f"│ Opened: {len(issues_opened):<5} │ Closed: {len(issues_closed):<5} │")
+    print("\nISSUES")
+    i_widths = [8, 55, 11]
+    print_divider(i_widths)
+    summary_text = f"Opened: {len(issues_opened)} | Closed: {len(issues_closed)}"
+    print_row(["", summary_text, ""], i_widths)
+
     if issues_opened:
-        print("│" + "─" * 15 + "┬" + "─" * 62 + "│")
-        print(f"│ {'Recent Issues':<14} │ {'Title':<50} {'Author':<10} │")
-        print("│" + "─" * 15 + "┼" + "─" * 62 + "│")
+        print_divider(i_widths, is_header=True)
+        print_row(["ID", "Title", "Author"], i_widths)
+        print_divider(i_widths, is_header=True)
         for issue in issues_opened[:3]:
-            title = issue['title'][:48] + ".." if len(issue['title']) > 50 else issue['title']
-            author = issue['user']['login'][:10]
-            print(f"│ #{issue['number']:<14} │ {title:<50} {author:<10} │")
-    print("└" + "─" * 78 + "┘")
-    
+            issue_id = f"#{issue['number']}"
+            title = truncate(issue['title'], i_widths[1] - 1)
+            author = truncate(issue['user']['login'], i_widths[2] - 1)
+            print_row([issue_id, title, author], i_widths)
+    print_divider(i_widths)
+
     # --- Pull Requests ---
-    print("\n" + "┌─ PULL REQUESTS " + "─" * 64 + "┐")
-    print(f"│ Opened: {len(prs_opened):<5} │ Merged: {len(prs_merged):<5} │ Not Merged: {len(prs_closed_unmerged):<5} │")
+    print("\nPULL REQUESTS")
+    p_widths = [8, 43, 12, 9]
+    print_divider(p_widths)
+    pr_summary_text = f"Opened: {len(prs_opened)} | Merged: {len(prs_merged)} | Not Merged: {len(prs_closed_unmerged)}"
+    print_row(["", pr_summary_text, "", ""], p_widths)
+    
     if prs_opened:
-        print("│" + "─" * 15 + "┬" + "─" * 62 + "│")
-        print(f"│ {'Recent PRs':<14} │ {'Title':<40} {'Author':<10} {'Status':>9} │")
-        print("│" + "─" * 15 + "┼" + "─" * 62 + "│")
+        print_divider(p_widths, is_header=True)
+        print_row(["ID", "Title", "Author", "Status"], p_widths)
+        print_divider(p_widths, is_header=True)
         for pr in prs_opened[:3]:
-            title = pr['title'][:38] + ".." if len(pr['title']) > 38 else pr['title']
-            author = pr['user']['login'][:10]
-            status = "Merged" if pr.get("merged_at") else ("Closed" if pr["state"] == "closed" else "Open")
-            print(f"│ #{pr['number']:<14} │ {title:<40} {author:<10} {status:>9} │")
-    print("└" + "─" * 78 + "┘")
+            pr_id = f"#{pr['number']}"
+            title = truncate(pr['title'], p_widths[1] - 1)
+            author = truncate(pr['user']['login'], p_widths[2] - 1)
+            status = truncate("Merged" if pr.get("merged_at") else ("Closed" if pr["state"] == "closed" else "Open"), p_widths[3])
+            print_row([pr_id, title, author, status], p_widths)
+    print_divider(p_widths)
     
     # --- Footer ---
-    print("\n" + "Report generated at: " + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    print("=" * 80)
+    print(f"\nReport generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print("-" * (WIDTH + 2))
