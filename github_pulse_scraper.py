@@ -262,9 +262,11 @@ def main():
                 print("\n" + "=" * 80)
                 do_export = input("Export data to JSON? (y/n): ").strip().lower()
                 if do_export == 'y':
-                    output_file = input("Output filename (default: pulse_report.json): ").strip()
+                    timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+                    default_filename = f"{args.owner}-{args.repo}-{timestamp}.json"
+                    output_file = input(f"Output filename (default: {default_filename}): ").strip()
                     if not output_file:
-                        output_file = "pulse_report.json"
+                        output_file = default_filename
                     scraper.export_json(period_days=args.days, output_file=output_file)
             break # Exit the loop on success
 
