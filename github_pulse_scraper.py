@@ -7,12 +7,11 @@ Fetches contribution data for a repository similar to the GitHub Pulse page
 import os
 import subprocess
 import requests
-import json
 import argparse
 from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 from dotenv import load_dotenv
-from utils import logger, export_to_json, format_timestamp, print_scorecard_report
+from utils import logger, export_to_json, print_scorecard_report
 
 # Load environment variables from .env file
 load_dotenv()
@@ -60,16 +59,17 @@ class GitHubPulseScraper:
         """Lists all public repositories for the owner, checking both org and user endpoints."""
         
         urls_to_try = [
-            f"{self.base_url}/orgs/{self.owner}/repos",
-            f"{self.base_url}/users/{self.owner}/repos"
+            (f"{self.base_url}/orgs/{self.owner}/repos", {"type": "public"}),
+            (f"{self.base_url}/users/{self.owner}/repos", {"type": "owner", "visibility": "public"})
         ]
         
-        for url in urls_to_try:
+        for url, base_params in urls_to_try:
             try:
                 all_repos = []
                 page = 1
                 while True:
-                    params = {"page": page, "per_page": 100, "type": "public"}
+                    params = {"page": page, "per_page": 100}
+                    params.update(base_params)
                     response = requests.get(url, headers=self.headers, params=params)
                     response.raise_for_status()
                     repos = response.json()
@@ -201,40 +201,43 @@ class GitHubPulseScraper:
     def generate_report(self, period_days=30):
         """Generate a comprehensive pulse report"""
         since_date = datetime.now(timezone.utc) - timedelta(days=period_days)
-        
-        # --- DATA FETCHING ---
-        repo_info = self.get_repo_info()
-        commits = self.get_commits(since_date)
-        issues = self.get_issues(since_date)
-        prs = self.get_pull_requests(since_date)
-        
-        # --- DATA PROCESSING ---
-        contributors = self.analyze_contributors(commits)
-        
-        issues_opened = [i for i in issues if datetime.fromisoformat(i["created_at"].replace("Z", "+00:00")) >= since_date]
-        issues_closed = [i for i in issues if i["state"] == "closed" and i.get("closed_at") and datetime.fromisoformat(i["closed_at"].replace("Z", "+00:00")) >= since_date]
-        
-        prs_opened = [p for p in prs if datetime.fromisoformat(p["created_at"].replace("Z", "+00:00")) >= since_date]
-        closed_prs = [p for p in prs if p["state"] == "closed" and p.get("closed_at") and datetime.fromisoformat(p["closed_at"].replace("Z", "+00:00")) >= since_date]
-        prs_merged = [p for p in closed_prs if p.get("merged_at")]
-        prs_closed_unmerged = [p for p in closed_prs if not p.get("merged_at")]
-        
-        open_prs = [p for p in prs if p["state"] == "open"]
 
-        # --- REPORTING ---
-        print_scorecard_report(
-            repo_info,
-            commits,
-            contributors,
-            issues_opened,
-            issues_closed,
-            prs_opened,
-            prs_merged,
-            prs_closed_unmerged,
-            period_days,
-            open_prs=open_prs
-        )
+        try:
+            # --- DATA FETCHING ---
+            repo_info = self.get_repo_info()
+            commits = self.get_commits(since_date)
+            issues = self.get_issues(since_date)
+            prs = self.get_pull_requests(since_date)
 
+            # --- DATA PROCESSING ---
+            contributors = self.analyze_contributors(commits)
+
+            issues_opened = [i for i in issues if datetime.fromisoformat(i["created_at"].replace("Z", "+00:00")) >= since_date]
+            issues_closed = [i for i in issues if i["state"] == "closed" and i.get("closed_at") and datetime.fromisoformat(i["closed_at"].replace("Z", "+00:00")) >= since_date]
+
+            prs_opened = [p for p in prs if datetime.fromisoformat(p["created_at"].replace("Z", "+00:00")) >= since_date]
+            closed_prs = [p for p in prs if p["state"] == "closed" and p.get("closed_at") and datetime.fromisoformat(p["closed_at"].replace("Z", "+00:00")) >= since_date]
+            prs_merged = [p for p in closed_prs if p.get("merged_at")]
+            prs_closed_unmerged = [p for p in closed_prs if not p.get("merged_at")]
+
+            open_prs = [p for p in prs if p["state"] == "open"]
+
+            # --- REPORTING ---
+            print_scorecard_report(
+                repo_info,
+                commits,
+                contributors,
+                issues_opened,
+                issues_closed,
+                prs_opened,
+                prs_merged,
+                prs_closed_unmerged,
+                period_days,
+                open_prs=open_prs
+            )
+        except Exception as e:
+            logger.error(f"An error occurred during report generation: {e}")
+            return
     def export_json(self, period_days=30, output_file="pulse_report.json"):
         """Export pulse data as JSON"""
         since_date = datetime.now(timezone.utc) - timedelta(days=period_days)

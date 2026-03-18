@@ -44,7 +44,7 @@ def print_scorecard_report(
     period_days,
     open_prs=None
 ):
-    """Prints a perfectly aligned, scorecard-style report using basic ASCII."""
+    """Prints a perfectly aligned, scorecard-style report using ASCII and Unicode characters."""
     if open_prs is None:
         open_prs = []
     
@@ -86,8 +86,8 @@ def print_scorecard_report(
     period_text = f"Period: Last {period_days} days"
 
     print("\n" + "=" * (WIDTH + 2))
-    print(f" {header_title.ljust(WIDTH)}")
-    print(f" {period_text.ljust(WIDTH)}")
+    print(f" {header_title.ljust(WIDTH)} ")
+    print(f" {period_text.ljust(WIDTH)} ")
     print("=" * (WIDTH + 2))
 
     # --- Key Metrics ---
@@ -138,7 +138,7 @@ def print_scorecard_report(
     print("\nISSUES")
     i_widths = [8, 50, 12]
     print_divider([76])
-    summary_text = f"Active: {total_issues} | Opened: {len(issues_opened)} | Closed: {len(issues_closed)}"
+    summary_text = truncate(f"Active: {total_issues} | Opened: {len(issues_opened)} | Closed: {len(issues_closed)}", 76)
     print_row([summary_text], [76])
 
     if issues_opened:
@@ -156,12 +156,12 @@ def print_scorecard_report(
     print("\nPULL REQUESTS")
     p_widths = [8, 38, 12, 9]
     print_divider([76])
-    pr_summary_text = f"Active: {total_prs} | New: {len(prs_opened)} | Merged: {len(prs_merged)} | Closed: {len(prs_closed_unmerged)} | Open: {len(open_prs)}"
+    pr_summary_text = truncate(f"Active: {total_prs} | New: {len(prs_opened)} | Merged: {len(prs_merged)} | Closed: {len(prs_closed_unmerged)} | Open: {len(open_prs)}", 76)
     print_row([pr_summary_text], [76])
     
     # Display recently opened PRs (which includes those recently merged or closed)
-    # Always include merged PRs in addition to open PRs
-    unique_prs_display = {pr['number']: pr for pr in (prs_opened + open_prs + prs_merged)}
+    # Always include merged and closed PRs in addition to open PRs
+    unique_prs_display = {pr['number']: pr for pr in (prs_opened + open_prs + prs_merged + prs_closed_unmerged)}
     # Sort by updated_at descending to show most recent activity
     display_prs = sorted(unique_prs_display.values(), key=lambda x: x.get('updated_at', ''), reverse=True)
     

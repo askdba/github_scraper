@@ -49,3 +49,58 @@ def test_analyze_contributors(scraper):
     assert contributors["user1"] == 2
     assert contributors["user2"] == 1
     assert "Unknown" not in contributors # Since we filter by commit.get("author")
+
+import subprocess
+from unittest.mock import patch
+from github_pulse_scraper import get_local_repo_info
+
+def test_get_local_repo_info_https():
+    with patch("subprocess.check_output", return_value=b"https://github.com/myorg/myrepo.git\n"):
+        owner, repo = get_local_repo_info()
+        assert owner == "myorg"
+        assert repo == "myrepo"
+
+def test_get_local_repo_info_ssh():
+    with patch("subprocess.check_output", return_value=b"git@github.com:myorg/myrepo.git\n"):
+        owner, repo = get_local_repo_info()
+        assert owner == "myorg"
+        assert repo == "myrepo"
+
+def test_get_local_repo_info_fallback():
+    with patch("subprocess.check_output", side_effect=subprocess.CalledProcessError(1, "git")):
+        owner, repo = get_local_repo_info()
+        assert owner == "Altinity"
+        assert repo == "altinityknowledgebase"
+
+@responses.activate
+def test_list_owner_repos_org(scraper):
+    responses.add(
+        responses.GET,
+        "https://api.github.com/orgs/test_owner/repos",
+        json=[{"name": "repo1"}, {"name": "repo2"}],
+        status=200
+    )
+    repos = scraper.list_owner_repos()
+    assert len(repos) == 2
+    assert repos[0]["name"] == "repo1"
+
+@responses.activate
+def test_list_owner_repos_user_fallback(scraper):
+    # Org endpoint returns 404
+    responses.add(
+        responses.GET,
+        "https://api.github.com/orgs/test_owner/repos",
+        json={"message": "Not Found"},
+        status=404
+    )
+    # User endpoint succeeds
+    responses.add(
+        responses.GET,
+        "https://api.github.com/users/test_owner/repos",
+        json=[{"name": "user_repo1"}],
+        status=200
+    )
+    repos = scraper.list_owner_repos()
+    assert len(repos) == 1
+    assert repos[0]["name"] == "user_repo1"
+
