@@ -7,14 +7,18 @@ This package provides tools to scrape contribution data from GitHub repositories
 1. **github_pulse_scraper.py** - Main API-based scraper (requires GitHub API access)
 2. **github_pulse_web_scraper.py** - Alternative web scraping approach using Selenium
 3. **utils.py** - Shared utilities for reporting and exports
-4. **requirements.txt** - Python dependencies
+4. **pyproject.toml** - Project metadata and Python dependencies
 5. **tests/** - Unit tests for the scraper
 
 ## Setup
 
-1. Install dependencies:
+1. Install the package and its dependencies:
    ```bash
-   pip install -r requirements.txt
+   # For regular use
+   pip install .
+
+   # For development (includes testing tools)
+   pip install .[dev]
    ```
 
 2. (Optional but recommended) Get a GitHub Personal Access Token:

@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "github-pulse-scraper"
+version = "1.0.0"
+description = "Tools to scrape contribution data from GitHub repositories, similar to the GitHub Pulse page."
+readme = "README.md"
+authors = [{ name = "Your Name", email = "your@email.com" }]
+license = { file = "LICENSE" } # Optional: Add a LICENSE file if you have one
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "License :: OSI Approved :: MIT License", # Optional: Choose a license
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "requests>=2.31.0",
+    "selenium>=4.15.0",
+    "beautifulsoup4>=4.12.0",
+    "lxml>=4.9.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "responses>=0.23.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/askdba/github_scraper"
+Issues = "https://github.com/askdba/github_scraper/issues"
