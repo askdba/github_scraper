@@ -5,6 +5,7 @@ Fetches contribution data for a repository similar to the GitHub Pulse page
 """
 
 import os
+import subprocess
 import requests
 import json
 import argparse
@@ -15,6 +16,25 @@ from utils import logger, export_to_json, format_timestamp, print_scorecard_repo
 
 # Load environment variables from .env file
 load_dotenv()
+
+def get_local_repo_info():
+    """Attempt to get the owner and repo from the local git remote origin."""
+    try:
+        url = subprocess.check_output(["git", "config", "--get", "remote.origin.url"], stderr=subprocess.DEVNULL).decode("utf-8").strip()
+        if url:
+            # Handle https://github.com/owner/repo.git
+            if url.startswith("https://"):
+                parts = url.replace(".git", "").split("/")
+                if len(parts) >= 2:
+                    return parts[-2], parts[-1]
+            # Handle git@github.com:owner/repo.git
+            elif url.startswith("git@"):
+                parts = url.split(":")[-1].replace(".git", "").split("/")
+                if len(parts) == 2:
+                    return parts[0], parts[1]
+    except Exception:
+        pass
+    return "Altinity", "altinityknowledgebase"
 
 class GitHubPulseScraper:
     def __init__(self, owner, repo, token=None):
@@ -198,6 +218,8 @@ class GitHubPulseScraper:
         closed_prs = [p for p in prs if p["state"] == "closed" and p.get("closed_at") and datetime.fromisoformat(p["closed_at"].replace("Z", "+00:00")) >= since_date]
         prs_merged = [p for p in closed_prs if p.get("merged_at")]
         prs_closed_unmerged = [p for p in closed_prs if not p.get("merged_at")]
+        
+        open_prs = [p for p in prs if p["state"] == "open"]
 
         # --- REPORTING ---
         print_scorecard_report(
@@ -209,7 +231,8 @@ class GitHubPulseScraper:
             prs_opened,
             prs_merged,
             prs_closed_unmerged,
-            period_days
+            period_days,
+            open_prs=open_prs
         )
 
     def export_json(self, period_days=30, output_file="pulse_report.json"):
@@ -239,8 +262,11 @@ class GitHubPulseScraper:
 
 def main():
     parser = argparse.ArgumentParser(description="GitHub Repository Pulse Data Scraper")
-    parser.add_argument("--owner", default="Altinity", help="Repository owner")
-    parser.add_argument("--repo", default="altinityknowledgebase", help="Repository name")
+    
+    default_owner, default_repo = get_local_repo_info()
+    
+    parser.add_argument("--owner", default=default_owner, help=f"Repository owner (default: {default_owner})")
+    parser.add_argument("--repo", default=default_repo, help=f"Repository name (default: {default_repo})")
     parser.add_argument("--days", type=int, default=30, help="Period in days (default: 30)")
     parser.add_argument("--token", help="GitHub Personal Access Token")
     parser.add_argument("--export", help="Output JSON filename")
