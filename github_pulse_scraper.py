@@ -272,7 +272,7 @@ def main():
     parser.add_argument("--repo", default=default_repo, help=f"Repository name (default: {default_repo})")
     parser.add_argument("--days", type=int, default=30, help="Period in days (default: 30)")
     parser.add_argument("--token", help="GitHub Personal Access Token")
-    parser.add_argument("--export", help="Output JSON filename")
+    parser.add_argument("--export", nargs='?', const='AUTO', help="Export data to JSON (optionally provide a filename)")
     
     args = parser.parse_args()
 
@@ -285,18 +285,13 @@ def main():
             print("\n" + "=" * 80)
             print("Report complete!")
             
-            if args.export:
-                scraper.export_json(period_days=args.days, output_file=args.export)
-            else:
-                print("\n" + "=" * 80)
-                do_export = input("Export data to JSON? (y/n): ").strip().lower()
-                if do_export == 'y':
+            if args.export is not None:
+                if args.export == 'AUTO':
                     timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-                    default_filename = f"{args.owner}-{args.repo}-{timestamp}.json"
-                    output_file = input(f"Output filename (default: {default_filename}): ").strip()
-                    if not output_file:
-                        output_file = default_filename
-                    scraper.export_json(period_days=args.days, output_file=output_file)
+                    output_file = f"{args.owner}-{args.repo}-{timestamp}.json"
+                else:
+                    output_file = args.export
+                scraper.export_json(period_days=args.days, output_file=output_file)
             break # Exit the loop on success
 
         except requests.exceptions.HTTPError as e:
