@@ -33,7 +33,7 @@ GITHUB_TOKEN=your_token_here
 | `--repo`  | Repository name | altinityknowledgebase |
 | `--days`  | Period in days | 30 |
 | `--token` | GitHub API Token | (from .env) |
-| `--export`| JSON filename | (prompted) |
+| `--export`| JSON filename (optional) | (AUTO generated) |
 
 ## Example CLI Usage
 
@@ -41,7 +41,10 @@ GITHUB_TOKEN=your_token_here
 # Weekly report for a specific repo
 python3 github_pulse_scraper.py --owner Altinity --repo clickhouse-operator --days 7
 
-# Export data directly to JSON
+# Export data to JSON with auto-generated filename
+python3 github_pulse_scraper.py --export
+
+# Export data directly to a specific JSON file
 python3 github_pulse_scraper.py --export clickhouse_pulse.json
 ```
 
