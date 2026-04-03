@@ -201,7 +201,6 @@ class GitHubPulseScraper:
     def generate_report(self, period_days=30):
         """Generate a comprehensive pulse report"""
         since_date = datetime.now(timezone.utc) - timedelta(days=period_days)
-
         try:
             # --- DATA FETCHING ---
             repo_info = self.get_repo_info()
@@ -238,6 +237,7 @@ class GitHubPulseScraper:
         except Exception as e:
             logger.error(f"An error occurred during report generation: {e}")
             return
+
     def export_json(self, period_days=30, output_file="pulse_report.json"):
         """Export pulse data as JSON"""
         since_date = datetime.now(timezone.utc) - timedelta(days=period_days)

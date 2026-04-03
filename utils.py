@@ -159,17 +159,26 @@ def print_scorecard_report(
     pr_summary_text = truncate(f"Active: {total_prs} | New: {len(prs_opened)} | Merged: {len(prs_merged)} | Closed: {len(prs_closed_unmerged)} | Open: {len(open_prs)}", 76)
     print_row([pr_summary_text], [76])
     
-    # Display recently opened PRs (which includes those recently merged or closed)
-    # Always include merged and closed PRs in addition to open PRs
+    # Display recently updated PRs
     unique_prs_display = {pr['number']: pr for pr in (prs_opened + open_prs + prs_merged + prs_closed_unmerged)}
     # Sort by updated_at descending to show most recent activity
-    display_prs = sorted(unique_prs_display.values(), key=lambda x: x.get('updated_at', ''), reverse=True)
+    sorted_prs = sorted(unique_prs_display.values(), key=lambda x: x.get('updated_at', ''), reverse=True)
     
+    # Filter: Show ALL merged PRs, but limit non-merged PRs to top 3
+    display_prs = []
+    non_merged_count = 0
+    for pr in sorted_prs:
+        if pr.get("merged_at"):
+            display_prs.append(pr)
+        elif non_merged_count < 3:
+            display_prs.append(pr)
+            non_merged_count += 1
+            
     if display_prs:
         print_divider(p_widths, is_header=True)
         print_row(["ID", "Title", "Author", "Status"], p_widths)
         print_divider(p_widths, is_header=True)
-        for pr in display_prs[:5]:
+        for pr in display_prs:
             pr_id = f"#{pr['number']}"
             title = truncate(pr['title'], p_widths[1] - 1)
             author = truncate(pr['user']['login'], p_widths[2] - 1)
