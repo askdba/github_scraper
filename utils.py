@@ -151,11 +151,27 @@ def print_scorecard_report(
     pr_summary_text = f"Opened: {len(prs_opened)} | Merged: {len(prs_merged)} | Not Merged: {len(prs_closed_unmerged)}"
     print_row(["", pr_summary_text, "", ""], p_widths)
     
-    if prs_opened:
+    # Deduplicate PRs that might be in both lists (opened and merged)
+    seen_pr_ids = set()
+    prs_to_show = []
+    
+    # Add up to 3 opened PRs
+    for pr in prs_opened[:3]:
+        if pr['number'] not in seen_pr_ids:
+            prs_to_show.append(pr)
+            seen_pr_ids.add(pr['number'])
+            
+    # Add up to 3 merged PRs (not already seen)
+    for pr in prs_merged[:3]:
+        if pr['number'] not in seen_pr_ids:
+            prs_to_show.append(pr)
+            seen_pr_ids.add(pr['number'])
+    
+    if prs_to_show:
         print_divider(p_widths, is_header=True)
         print_row(["ID", "Title", "Author", "Status"], p_widths)
         print_divider(p_widths, is_header=True)
-        for pr in prs_opened[:3]:
+        for pr in prs_to_show:
             pr_id = f"#{pr['number']}"
             title = truncate(pr['title'], p_widths[1] - 1)
             author = truncate(pr['user']['login'], p_widths[2] - 1)
