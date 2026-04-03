@@ -11,7 +11,7 @@ import argparse
 from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 from dotenv import load_dotenv
-from utils import logger, export_to_json, format_timestamp, print_scorecard_report
+from utils import logger, export_to_json, print_scorecard_report
 
 # Load environment variables from .env file
 load_dotenv()
@@ -40,16 +40,16 @@ class GitHubPulseScraper:
         """Lists all public repositories for the owner, checking both org and user endpoints."""
         
         urls_to_try = [
-            f"{self.base_url}/orgs/{self.owner}/repos",
-            f"{self.base_url}/users/{self.owner}/repos"
+            (f"{self.base_url}/orgs/{self.owner}/repos", {"type": "public"}),
+            (f"{self.base_url}/users/{self.owner}/repos", {})
         ]
         
-        for url in urls_to_try:
+        for url, extra_params in urls_to_try:
             try:
                 all_repos = []
                 page = 1
                 while True:
-                    params = {"page": page, "per_page": 100, "type": "public"}
+                    params = {"page": page, "per_page": 100, **extra_params}
                     response = requests.get(url, headers=self.headers, params=params)
                     response.raise_for_status()
                     repos = response.json()

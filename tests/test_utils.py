@@ -1,10 +1,8 @@
 import pytest
 from utils import print_scorecard_report
 from datetime import datetime
-from io import StringIO
-import sys
 
-def test_print_scorecard_report_includes_merged_prs():
+def test_print_scorecard_report_includes_merged_prs(capsys):
     # Setup mock data
     repo_info = {"full_name": "test/repo", "description": "test repo"}
     commits = []
@@ -20,26 +18,20 @@ def test_print_scorecard_report_includes_merged_prs():
     ]
     prs_closed_unmerged = []
     
-    # Capture stdout
-    captured_output = StringIO()
-    sys.stdout = captured_output
+    print_scorecard_report(
+        repo_info,
+        commits,
+        contributors,
+        issues_opened,
+        issues_closed,
+        prs_opened,
+        prs_merged,
+        prs_closed_unmerged,
+        period_days=30
+    )
     
-    try:
-        print_scorecard_report(
-            repo_info,
-            commits,
-            contributors,
-            issues_opened,
-            issues_closed,
-            prs_opened,
-            prs_merged,
-            prs_closed_unmerged,
-            period_days=30
-        )
-    finally:
-        sys.stdout = sys.__stdout__
-    
-    output = captured_output.getvalue()
+    captured = capsys.readouterr()
+    output = captured.out
     
     # Verify both opened and merged PRs are in the report
     assert "Open PR 1" in output
@@ -47,7 +39,7 @@ def test_print_scorecard_report_includes_merged_prs():
     assert "Merged" in output
     assert "Open" in output
 
-def test_print_scorecard_report_deduplicates_prs():
+def test_print_scorecard_report_deduplicates_prs(capsys):
     # Setup mock data where same PR is in both opened and merged
     repo_info = {"full_name": "test/repo", "description": "test repo"}
     commits = []
@@ -61,26 +53,20 @@ def test_print_scorecard_report_deduplicates_prs():
     prs_merged = [pr]
     prs_closed_unmerged = []
     
-    # Capture stdout
-    captured_output = StringIO()
-    sys.stdout = captured_output
+    print_scorecard_report(
+        repo_info,
+        commits,
+        contributors,
+        issues_opened,
+        issues_closed,
+        prs_opened,
+        prs_merged,
+        prs_closed_unmerged,
+        period_days=30
+    )
     
-    try:
-        print_scorecard_report(
-            repo_info,
-            commits,
-            contributors,
-            issues_opened,
-            issues_closed,
-            prs_opened,
-            prs_merged,
-            prs_closed_unmerged,
-            period_days=30
-        )
-    finally:
-        sys.stdout = sys.__stdout__
-    
-    output = captured_output.getvalue()
+    captured = capsys.readouterr()
+    output = captured.out
     
     # Verify the PR is only listed once
     assert output.count("Both PR 1") == 1

@@ -20,6 +20,7 @@ This package provides tools to scrape contribution data from GitHub repositories
    # For development (includes testing tools)
    pip install .[dev]
    ```
+   > **Note**: `pip install .` and `pip install .[dev]` are the current recommended installation methods. If you see older documentation (like `QUICKSTART.md`) mentioning `pip install -r requirements.txt`, please use the commands above instead.
 
 2. (Optional but recommended) Get a GitHub Personal Access Token:
    - Go to: https://github.com/settings/tokens

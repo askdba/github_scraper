@@ -4,7 +4,7 @@
 
 ### 1. Install dependencies:
 ```bash
-pip install -r requirements.txt
+pip install .
 ```
 
 ### 2. (Optional) Set up authentication:
@@ -52,5 +52,5 @@ python3 github_pulse_web_scraper.py --owner Altinity --repo altinityknowledgebas
 ## Troubleshooting
 
 - **Rate limit exceeded**: Ensure `GITHUB_TOKEN` is set in `.env` or passed via `--token`.
-- **ImportError**: Run `pip install -r requirements.txt`.
+- **ImportError**: Run `pip install .`.
 - **ModuleNotFoundError (tests)**: Use `PYTHONPATH=. pytest`.

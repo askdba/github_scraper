@@ -89,10 +89,13 @@ def print_scorecard_report(
 
     # --- Key Metrics ---
     total_commits = len(commits)
-    total_issues = len(issues_opened) + len(issues_closed)
-    total_prs = len(prs_opened) + len(prs_merged) + len(prs_closed_unmerged)
-    
-    c_text = f"Total Commits: {total_commits}"
+    unique_issues = set([i['number'] for i in issues_opened] + [i['number'] for i in issues_closed])
+    total_issues = len(unique_issues)
+
+    unique_prs = set([p['number'] for p in prs_opened] + [p['number'] for p in prs_merged] + [p['number'] for p in prs_closed_unmerged])
+    total_prs = len(unique_prs)
+
+    c_text = f"Total Commits: {len(commits)}"
     i_text = f"Total Issues: {total_issues}"
     p_text = f"Total PRs: {total_prs}"
     
@@ -163,6 +166,12 @@ def print_scorecard_report(
             
     # Add all merged PRs (not already seen)
     for pr in prs_merged:
+        if pr['number'] not in seen_pr_ids:
+            prs_to_show.append(pr)
+            seen_pr_ids.add(pr['number'])
+
+    # Add up to 3 closed/unmerged PRs
+    for pr in prs_closed_unmerged[:3]:
         if pr['number'] not in seen_pr_ids:
             prs_to_show.append(pr)
             seen_pr_ids.add(pr['number'])

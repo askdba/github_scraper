@@ -7,12 +7,10 @@ name = "github-pulse-scraper"
 version = "1.0.0"
 description = "Tools to scrape contribution data from GitHub repositories, similar to the GitHub Pulse page."
 readme = "README.md"
-authors = [{ name = "Your Name", email = "your@email.com" }]
-license = { file = "LICENSE" } # Optional: Add a LICENSE file if you have one
+authors = []
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
-    "License :: OSI Approved :: MIT License", # Optional: Choose a license
     "Operating System :: OS Independent",
 ]
 requires-python = ">=3.9"
@@ -29,6 +27,12 @@ dev = [
     "pytest>=7.4.0",
     "responses>=0.23.0",
 ]
+
+[project.scripts]
+github-pulse-scraper = "github_pulse_scraper:main"
+
+[tool.setuptools]
+py-modules = ["github_pulse_scraper", "github_pulse_web_scraper", "utils"]
 
 [project.urls]
 Homepage = "https://github.com/askdba/github_scraper"
