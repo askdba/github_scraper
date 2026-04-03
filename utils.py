@@ -161,8 +161,8 @@ def print_scorecard_report(
             prs_to_show.append(pr)
             seen_pr_ids.add(pr['number'])
             
-    # Add up to 3 merged PRs (not already seen)
-    for pr in prs_merged[:3]:
+    # Add all merged PRs (not already seen)
+    for pr in prs_merged:
         if pr['number'] not in seen_pr_ids:
             prs_to_show.append(pr)
             seen_pr_ids.add(pr['number'])
