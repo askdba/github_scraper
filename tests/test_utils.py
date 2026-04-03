@@ -1,6 +1,5 @@
 import pytest
 from utils import print_scorecard_report
-from datetime import datetime
 
 def test_print_scorecard_report_includes_merged_prs(capsys):
     # Setup mock data

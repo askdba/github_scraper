@@ -41,7 +41,7 @@ def print_scorecard_report(
     prs_opened,
     prs_merged,
     prs_closed_unmerged,
-period_days,
+    period_days,
     open_prs=None
 ):
     """Prints a perfectly aligned, scorecard-style report using ASCII and Unicode characters."""

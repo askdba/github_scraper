@@ -5,6 +5,9 @@
 ### 1. Install dependencies:
 ```bash
 pip install .
+
+# Or, if you plan to run tests/develop:
+pip install .[dev]
 ```
 
 ### 2. (Optional) Set up authentication:
