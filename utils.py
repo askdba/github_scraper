@@ -41,9 +41,12 @@ def print_scorecard_report(
     prs_opened,
     prs_merged,
     prs_closed_unmerged,
-    period_days
+period_days,
+    open_prs=None
 ):
-    """Prints a perfectly aligned, scorecard-style report using basic ASCII."""
+    """Prints a perfectly aligned, scorecard-style report using ASCII and Unicode characters."""
+    if open_prs is None:
+        open_prs = []
     
     WIDTH = 78
 
@@ -83,30 +86,32 @@ def print_scorecard_report(
     period_text = f"Period: Last {period_days} days"
 
     print("\n" + "=" * (WIDTH + 2))
-    print(f" {header_title.ljust(WIDTH)}")
-    print(f" {period_text.ljust(WIDTH)}")
+    print(f" {header_title.ljust(WIDTH)} ")
+    print(f" {period_text.ljust(WIDTH)} ")
     print("=" * (WIDTH + 2))
 
     # --- Key Metrics ---
     total_commits = len(commits)
-    unique_issues = set([i['number'] for i in issues_opened] + [i['number'] for i in issues_closed])
+    
+    unique_issues = {i['number'] for i in issues_opened + issues_closed}
     total_issues = len(unique_issues)
-
-    unique_prs = set([p['number'] for p in prs_opened] + [p['number'] for p in prs_merged] + [p['number'] for p in prs_closed_unmerged])
+    
+    # All PRs updated in the period fall into exactly one of these current states
+    unique_prs = {pr['number']: pr for pr in (prs_opened + open_prs + prs_merged + prs_closed_unmerged)}
     total_prs = len(unique_prs)
-
-    c_text = f"Total Commits: {len(commits)}"
+    
+    c_text = f"Total Commits: {total_commits}"
     i_text = f"Total Issues: {total_issues}"
     p_text = f"Total PRs: {total_prs}"
     
     print("\nSUMMARY OVERVIEW")
-    print_divider([25, 25, 26])
-    print_row([c_text, i_text, p_text], [25, 25, 26])
-    print_divider([25, 25, 26])
+    print_divider([22, 22, 26])
+    print_row([c_text, i_text, p_text], [22, 22, 26])
+    print_divider([22, 22, 26])
 
     # --- Commits & Contributors ---
     print("\nCOMMITS & CONTRIBUTORS")
-    c_widths = [4, 33, 10, 25]
+    c_widths = [4, 30, 10, 23]
     print_divider(c_widths)
     summary_items = [
         "", 
@@ -131,10 +136,10 @@ def print_scorecard_report(
 
     # --- Issues ---
     print("\nISSUES")
-    i_widths = [8, 55, 11]
-    print_divider(i_widths)
-    summary_text = f"Opened: {len(issues_opened)} | Closed: {len(issues_closed)}"
-    print_row(["", summary_text, ""], i_widths)
+    i_widths = [8, 50, 12]
+    print_divider([76])
+    summary_text = truncate(f"Active: {total_issues} | Opened: {len(issues_opened)} | Closed: {len(issues_closed)}", 76)
+    print_row([summary_text], [76])
 
     if issues_opened:
         print_divider(i_widths, is_header=True)
@@ -149,38 +154,22 @@ def print_scorecard_report(
 
     # --- Pull Requests ---
     print("\nPULL REQUESTS")
-    p_widths = [8, 43, 12, 9]
-    print_divider(p_widths)
-    pr_summary_text = f"Opened: {len(prs_opened)} | Merged: {len(prs_merged)} | Not Merged: {len(prs_closed_unmerged)}"
-    print_row(["", pr_summary_text, "", ""], p_widths)
+    p_widths = [8, 38, 12, 9]
+    print_divider([76])
+    pr_summary_text = truncate(f"Active: {total_prs} | New: {len(prs_opened)} | Merged: {len(prs_merged)} | Closed: {len(prs_closed_unmerged)} | Open: {len(open_prs)}", 76)
+    print_row([pr_summary_text], [76])
     
-    # Deduplicate PRs that might be in both lists (opened and merged)
-    seen_pr_ids = set()
-    prs_to_show = []
+    # Display recently opened PRs (which includes those recently merged or closed)
+    # Always include merged and closed PRs in addition to open PRs
+    unique_prs_display = {pr['number']: pr for pr in (prs_opened + open_prs + prs_merged + prs_closed_unmerged)}
+    # Sort by updated_at descending to show most recent activity
+    display_prs = sorted(unique_prs_display.values(), key=lambda x: x.get('updated_at', ''), reverse=True)
     
-    # Add up to 3 opened PRs
-    for pr in prs_opened[:3]:
-        if pr['number'] not in seen_pr_ids:
-            prs_to_show.append(pr)
-            seen_pr_ids.add(pr['number'])
-            
-    # Add all merged PRs (not already seen)
-    for pr in prs_merged:
-        if pr['number'] not in seen_pr_ids:
-            prs_to_show.append(pr)
-            seen_pr_ids.add(pr['number'])
-
-    # Add up to 3 closed/unmerged PRs
-    for pr in prs_closed_unmerged[:3]:
-        if pr['number'] not in seen_pr_ids:
-            prs_to_show.append(pr)
-            seen_pr_ids.add(pr['number'])
-    
-    if prs_to_show:
+    if display_prs:
         print_divider(p_widths, is_header=True)
         print_row(["ID", "Title", "Author", "Status"], p_widths)
         print_divider(p_widths, is_header=True)
-        for pr in prs_to_show:
+        for pr in display_prs[:5]:
             pr_id = f"#{pr['number']}"
             title = truncate(pr['title'], p_widths[1] - 1)
             author = truncate(pr['user']['login'], p_widths[2] - 1)
